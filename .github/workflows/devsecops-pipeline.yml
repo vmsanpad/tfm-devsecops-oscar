@@ -1,4 +1,4 @@
-name: DevSecOps Security Pipeline
+name: DevSecOps Comprehensive Security Pipeline
 
 on:
   push:
@@ -7,35 +7,62 @@ on:
     branches: [ "main" ]
 
 jobs:
-  security-scans:
-    name: DevSecOps Automated Scans
+  devsecops-pipeline:
+    name: Full Security Audit Suite
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout Source Code
+      - name: Checkout Repository
         uses: actions/checkout@v4
 
-      # 1. Detección de Secretos y Credenciales Expuestas
-      - name: Run Gitleaks (Secret Scanning)
+      # 1. Deteccion de Secretos
+      - name: Run Gitleaks
         uses: gitleaks/gitleaks-action@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         continue-on-error: true
 
-      # 2. Análisis Estático para Go (Core de OSCAR)
-      - name: Set up Go Environment
+      # 2. Analisis Estatico Go (Core OSCAR)
+      - name: Set up Go
         uses: actions/setup-go@v5
         with:
           go-version: '1.21'
 
-      - name: Run Gosec (Go SAST Scanner)
+      - name: Run Gosec (Go SAST)
         run: |
           go install github.com/securego/gosec/v2/cmd/gosec@latest
           gosec -fmt=text ./... || true
 
-      # 3. Análisis de Seguridad para Dockerfile
-      - name: Run Hadolint (Dockerfile Linter)
+      # 3. Analisis Estatico Python
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Run Bandit (Python SAST)
+        run: |
+          pip install bandit
+          bandit -r app.py || true
+
+      # 4. Analisis Estatico Semgrep
+      - name: Run Semgrep
+        run: |
+          pip install semgrep
+          semgrep scan --config auto || true
+
+      # 5. Linting de Dockerfile
+      - name: Run Hadolint
         uses: hadolint/hadolint-action@v3.1.0
         with:
           dockerfile: Dockerfile
+        continue-on-error: true
+
+      # 6. Escaneo de Dependencias (Trivy)
+      - name: Run Trivy FS Scan
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          format: 'table'
+          severity: 'CRITICAL,HIGH,MEDIUM'
         continue-on-error: true
