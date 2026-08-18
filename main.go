@@ -1,17 +1,19 @@
 package main
 
 import (
+	"crypto/rand"
 	"fmt"
-	"math/rand"
-	"os/exec"
+	"math/big"
 )
 
 func main() {
-	// Fallo 1: Generador pseudoaleatorio débil para seguridad (G404)
-	tokenInseguro := rand.Intn(10000)
-	fmt.Printf("Token generado: %d\n", tokenInseguro)
+	// Corrección: Generador criptográficamente seguro
+	limite := big.NewInt(10000)
+	n, err := rand.Int(rand.Reader, limite)
+	if err != nil {
+		fmt.Println("Error generando número:", err)
+		return
+	}
 
-	// Fallo 2: Ejecución de comando del sistema sin sanitizar (G204)
-	cmd := exec.Command("sh", "-c", "echo test")
-	_ = cmd.Run()
+	fmt.Printf("Token seguro generado: %d\n", n)
 }
