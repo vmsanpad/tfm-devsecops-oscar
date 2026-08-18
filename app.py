@@ -1,12 +1,13 @@
+import os
 import subprocess
 
-# Fallo 1: Secreto expuesto en texto plano (Detectado por Gitleaks)
-AWS_SECRET_KEY = "AKIAIOSFODNN7EXAMPLE1234567890abcdef"
+# Corrección 1: Las credenciales se leen de variables de entorno, no en texto plano
+AWS_SECRET_KEY = os.getenv("AWS_SECRET_KEY", "default_safe_value")
 
-# Fallo 2: Uso inseguro de shell=True en subprocesos (Detectado por Bandit - B602)
-def ejecutar_comando(comando):
-    subprocess.Popen(comando, shell=True)
+# Corrección 2: Ejecución segura pasando argumentos como lista y sin shell=True
+def ejecutar_comando():
+    subprocess.run(["echo", "Módulo ejecutado correctamente"], check=True)
 
 if __name__ == "__main__":
-    print("Módulo de pruebas")
-    ejecutar_comando("ls -la")
+    print("Módulo de pruebas corregido")
+    ejecutar_comando()
