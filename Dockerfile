@@ -1,10 +1,18 @@
-# Fallo 1: Uso de tag no específico/inseguro (DL3006 / DL3007)
-FROM ubuntu:latest
+# Corrección 1: Versión fija y específica en lugar de latest
+FROM ubuntu:22.04
 
-# Fallo 2: Ejecución como root por omisión y sin limpiar caché de apt (DL3008 / DL3009)
-RUN apt-get update && apt-get install -y curl
+# Corrección 2: Instalación limpia sin paquetes recomendados y purgando listas temporales
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl \
+    python3 \
+    && rm -rf /var/lib/apt/lists/*
 
-# Fallo 3: Uso de instrucción ADD en vez de COPY (DL3020)
-ADD app.py /app/app.py
+WORKDIR /app
+
+# Corrección 3: Uso de COPY en lugar de ADD
+COPY app.py /app/app.py
+
+# Corrección 4: Uso de usuario no privilegiado
+USER 1000
 
 CMD ["python3", "/app/app.py"]
